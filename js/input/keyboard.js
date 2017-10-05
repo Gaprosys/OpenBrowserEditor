@@ -27,7 +27,7 @@ function keyUp(evt) {
 
 function keyPressed(evt) {
   var keyValue = evt.which;
-  console.log(evt.which);
+  //console.log(evt.which);
   switch(evt.which) {
     case 8: //Backspace
       modifiyText("^AAAH");

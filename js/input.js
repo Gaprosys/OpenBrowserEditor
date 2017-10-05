@@ -6,6 +6,9 @@
 
 */
 
+let linePos = 0;
+let lastLinePos = -1;
+
 let currentState = {
   spanElement:              undefined,
   lineContent:              "",
@@ -16,11 +19,15 @@ let currentState = {
   indexOfEndCursorInEditor: 0,
   textBevorCursor:          "",
   textBehindCursor:         ""
-	
+
 };
 
 function modifiyText(key) {
   generateCurrentState();
+
+  lastLinePos = linePos;
+  linePos = -1;
+
   switch(key.charAt(0)) {
     case '^':
       if(key.length != 1) {
@@ -65,18 +72,18 @@ function processSpecialKey(specialKey) {
     break;
 
     case "AAAB": // Arrow Up
-      let indexOfLineCurrent = currentState.editorContent.lastIndexOf("<" + lineTagName, currentState.indexOfCursorInEditor);
-      let indexOfLineAbove = currentState.editorContent.lastIndexOf("<" + lineTagName, (indexOfLineCurrent - 1));
-			if(indexOfLineCurrent != 0) {
-      	let contentOfAboveLine = currentState.editorContent.substring(0, (indexOfLineCurrent - (lineTagName.length + 3 + "<br>".length)));
-      	contentOfAboveLine = contentOfAboveLine.substring((indexOfLineAbove + (lineTagName.length + 2)), contentOfAboveLine.length);
+      let indexOfLineCurrent = currentState.editorContent.lastIndexOf("<span", currentState.indexOfCursorInEditor) - 7;
+      let indexOfLineAbove = currentState.editorContent.lastIndexOf("<span", (indexOfLineCurrent)) + 6;
+			if(indexOfLineCurrent > 0) {
+      	let contentOfAboveLine = currentState.editorContent.substring(0, indexOfLineCurrent);
+      	contentOfAboveLine = contentOfAboveLine.substring(indexOfLineAbove, contentOfAboveLine.length);
 				currentState.spanElement.innerHTML = currentState.textBevorCursor + currentState.textBehindCursor;
      		currentState.editorContent = cutTextOut(currentState.editorContent, currentState.indexOfCursorInEditor, currentState.indexOfEndCursorInEditor);
 
-      	let cursorPos = indexOfLineCurrent - (lineTagName.length + 3 + "<br>".length);
-      	let newEditorContent = currentState.editorContent.substring(0, cursorPos);
+        let indexOfLineEndAbove = indexOfLineCurrent;
+      	let newEditorContent = currentState.editorContent.substring(0, indexOfLineEndAbove);
       	newEditorContent += "<div id=\"cursor\"></div>";
-      	newEditorContent += currentState.editorContent.substring(cursorPos, currentState.editorContent.length);
+      	newEditorContent += currentState.editorContent.substring(indexOfLineEndAbove, currentState.editorContent.length);
 
       	document.getElementById("editor").innerHTML = newEditorContent;
       	generateCurrentState();
@@ -97,10 +104,10 @@ function processSpecialKey(specialKey) {
     break;
 
     case "AAAD": // Arrow Down
-    let indexOfLineBelow = currentState.editorContent.indexOf("<" + lineTagName, currentState.indexOfCursorInEditor);
+    let indexOfLineBelow = currentState.editorContent.indexOf("<span", currentState.indexOfCursorInEditor);
 		if(indexOfLineBelow != -1) {
-			indexOfLineBelow += (lineTagName.length + 2);
-    	let contentOfBelowLine = currentState.editorContent.substring(0, (currentState.editorContent.indexOf("</" + lineTagName, indexOfLineBelow)));
+			indexOfLineBelow += 6;
+    	let contentOfBelowLine = currentState.editorContent.substring(0, (currentState.editorContent.indexOf("</span", indexOfLineBelow)));
     	contentOfBelowLine = contentOfBelowLine.substring(indexOfLineBelow, contentOfBelowLine.length);
     	//currentState.spanElement.innerHTML = currentState.textBevorCursor + currentState.textBehindCursor;
     	currentState.editorContent = cutTextOut(currentState.editorContent, currentState.indexOfCursorInEditor, currentState.indexOfEndCursorInEditor);
@@ -118,7 +125,7 @@ function processSpecialKey(specialKey) {
     case "AAAH":
       let contentBevorCursor = currentState.textBevorCursor;
       if(contentBevorCursor.length == "") {
-        let lastIndexOfSpan = currentState.editorContent.lastIndexOf("</" + lineTagName + ">", currentState.indexOfCursorInEditor);
+        let lastIndexOfSpan = currentState.editorContent.lastIndexOf("</span>", currentState.indexOfCursorInEditor);
         if(lastIndexOfSpan != -1) {
           let newEditorContent = currentState.editorContent.substring(0, lastIndexOfSpan) + currentState.editorContent.substring(currentState.indexOfCursorInEditor, currentState.editorContent.length);
           document.getElementById("editor").innerHTML = newEditorContent;
@@ -163,14 +170,14 @@ function processSpecialKey(specialKey) {
 		break;
 
     case "AAAM":
-      let indexOfCurrentSpan = currentState.editorContent.indexOf("</" + lineTagName + ">", currentState.indexOfCursorInEditor);
-      let indexOfCurrentSpanEnd = (indexOfCurrentSpan - (currentState.indexOfEndCursor - currentState.indexOfCursor)) - currentState.textBehindCursor.length + (lineTagName.length + 3);
+      let indexOfCurrentSpan = currentState.editorContent.indexOf("</span>", currentState.indexOfCursorInEditor);
+      let indexOfCurrentSpanEnd = (indexOfCurrentSpan - (currentState.indexOfEndCursor - currentState.indexOfCursor)) - currentState.textBehindCursor.length + 7;
       currentState.spanElement.innerHTML = currentState.textBevorCursor;
       currentState.textBevorCursor = "";
       currentState.editorContent = document.getElementById("editor").innerHTML;
       let contentBevorSpanEnd = currentState.editorContent.substring(0, indexOfCurrentSpanEnd);
       let contentBehindSpanEnd = currentState.editorContent.substring(indexOfCurrentSpanEnd, currentState.editorContent.length);
-      document.getElementById("editor").innerHTML = contentBevorSpanEnd + "<br><" + lineTagName + ">" + currentState.textBevorCursor + "<div id=\"cursor\"></div>" + currentState.textBehindCursor + "</" + lineTagName + ">" + contentBehindSpanEnd;
+      document.getElementById("editor").innerHTML = contentBevorSpanEnd + "<span>" + currentState.textBevorCursor + "<div id=\"cursor\"></div>" + currentState.textBehindCursor + "</span>" + contentBehindSpanEnd;
       currentState.spanElement = document.getElementById("cursor").parentNode;
       document.getElementById("cursor").style.left = "3px";
     break;
@@ -211,11 +218,6 @@ function writeLine() {
       document.getElementById("editor").scrollLeft = parseInt(document.getElementById("cursor").style.left);
     }
   }
-  document.getElementById("cursor").style.position = "absolute";
-  document.getElementById("cursor").style.height = "17px";
-  document.getElementById("cursor").style.width = "1px";
-  document.getElementById("cursor").style.backgroundColor = "black";
-
 }
 
 function positionateCursor(content) {

@@ -2,10 +2,11 @@
 
 	<head>
 		<title>Editor</title>
-    <script type="text/javascript" src="./js/main.js"></script>
+		<script type="text/javascript" src="./js/main.js"></script>
 		<script type="text/javascript" src="./js/utils.js"></script>
-    <script type="text/javascript" src="./js/input.js"></script>
-    <script type="text/javascript" src="./js/input/keyboard.js"></script>
+		<script type="text/javascript" src="./js/input.js"></script>
+		<script type="text/javascript" src="./js/input/keyboard.js"></script>
+		<script type="text/javascript" src="./js/input/mouse.js"></script>
 
 		<!-- HTML5 -->
 		<meta charset="utf-8">
@@ -15,11 +16,41 @@
 			span {
 				position: relative;
 				white-space: pre;
-				display: inline-block;
+				display: block;
+				height: 17px;
+			}
+
+			#editor {
+			  height: 99%;
+			  width: 99%;
+			  padding: 3px;
+			  overflow: scroll;
+			  margin: 0px;
+			}
+
+			#textWidth {
+				white-space: pre;
+				position: absolute;
+				left: -200%;
+			}
+
+			#cursor {
+				position: absolute;
+			  top: 1px;
+			  left: 0px;
+			  height: 17px;
+			  width: 1px;
+			  background-color: black;
+			}
+
+			#editorBody {
+				overflow: hidden;
+				margin: 0px;
 			}
 		</style>
 	</head>
 
-	<body id="editorBody" onload="assembleUI('editorBody'); init();"></body>
+	<body id="editorBody" onload="init();"><div id="editor"><span><div id="cursor"></div></span></div><span id="textWidth">
+	</body>
 
 </html>
