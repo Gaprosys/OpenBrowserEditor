@@ -7,50 +7,27 @@
 		<script type="text/javascript" src="./js/input.js"></script>
 		<script type="text/javascript" src="./js/input/keyboard.js"></script>
 		<script type="text/javascript" src="./js/input/mouse.js"></script>
+		<script type="text/javascript" src="./js/file.js"></script>
 
 		<!-- HTML5 -->
 		<meta charset="utf-8">
 		<!-- HTML 4.x -->
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
-		<style>
-			span {
-				position: relative;
-				white-space: pre;
-				display: block;
-				height: 17px;
-			}
-
-			#editor {
-			  height: 99%;
-			  width: 99%;
-			  padding: 3px;
-			  overflow: scroll;
-			  margin: 0px;
-			}
-
-			#textWidth {
-				white-space: pre;
-				position: absolute;
-				left: -200%;
-			}
-
-			#cursor {
-				position: absolute;
-			  top: 1px;
-			  left: 0px;
-			  height: 17px;
-			  width: 1px;
-			  background-color: black;
-			}
-
-			#editorBody {
-				overflow: hidden;
-				margin: 0px;
-			}
-		</style>
+		<link rel="stylesheet" href="./css/editor_style.css" />
 	</head>
 
-	<body id="editorBody" onload="init();"><div id="editor"><span><div id="cursor"></div></span></div><span id="textWidth">
+	<body id="editorBody" onload="init();">
+		<div id="menu">
+			<label id="fileName">new.txt</label>
+			<a href='javascript: document.getElementById("fileName").innerHTML = "new.txt"; clearEditorArea();' class="menuoption" id="new"><img src="new.png" alt="New" height="40px" width="40px"></a>
+			<label for="upload_file" id="uploadLabel" class="menuoption"><img src="open.png" alt="Open" height="40px" width="40px"></label>
+			<input type="file" id="upload_file" onchange="javascript: readFile();" />
+			<a href='javascript: writeEditorContentInFile();' id="save" class="menuoption"><img src="save.png" alt="Save" height="40px" width="40px"></a>
+		</div>
+		<div id="editor">
+			<span><div id="cursor"></div></span>
+		</div>
+		<span id="textWidth"></span>
 	</body>
 
 </html>

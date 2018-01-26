@@ -27,7 +27,7 @@ function keyUp(evt) {
 
 function keyPressed(evt) {
   var keyValue = evt.which;
-  //console.log(evt.which);
+	evt.preventDefault();
   switch(evt.which) {
     case 8: //Backspace
       modifiyText("^AAAH");
@@ -35,6 +35,8 @@ function keyPressed(evt) {
     case 9: //Tab
       modifiyText("^AAAI");
     break;
+		case 12: // Clear
+		break;
     case 13: // Enter
       modifiyText("^AAAM");
     break;
@@ -48,6 +50,10 @@ function keyPressed(evt) {
       keyboard_pressed.isAlt = true;
     break;
 		case 19: // Pause und Unterbrechung
+		break;
+		case 20: // Caps Lock
+		break;
+		case 27: // Escape
 		break;
 		case 33: // Bild Hoch
 			modifiyText("^AAAE");
@@ -110,13 +116,19 @@ function keyPressed(evt) {
 				modifiyText("´");
 			}
 		break;
-		case 192:
+		case 220:
 			if(keyboard_pressed.isShift == false) {
 				modifiyText("^");
 			} else {
 				modifiyText("°");
 			}
 		break;
+		case 221:
+		if(keyboard_pressed.isShift == true) {
+			modifiyText("`");
+		} else {
+			modifiyText("´");
+		}
 		case 225: // Alt Gr
 			keyboard_pressed.isAltGraph = true;
 		break;

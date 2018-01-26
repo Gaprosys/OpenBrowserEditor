@@ -1,32 +1,21 @@
 /*
 
-  Name:     input.js
-  Created:  20-08-2017 13-31
-  Owner:    Gaprosys
+	Name:     input.js
+	Created:  20-08-2017 13-31
+	Rewriten: 21-10-2017 23-45
+	Owner:    Gaprosys
 
 */
 
-let linePos = 0;
-let lastLinePos = -1;
-
 let currentState = {
-  spanElement:              undefined,
-  lineContent:              "",
-  editorContent:            "",
-  indexOfCursor:            0,
-  indexOfCursorInEditor:    0,
-  indexOfEndCursor:         0,
-  indexOfEndCursorInEditor: 0,
-  textBevorCursor:          "",
-  textBehindCursor:         ""
-
+	lineNode:											undefined,
+	lineIndex:										0,
+	contentBevorCursor:						"",
+	contentBehindCursor:					""
 };
 
 function modifiyText(key) {
   generateCurrentState();
-
-  lastLinePos = linePos;
-  linePos = -1;
 
   switch(key.charAt(0)) {
     case '^':
@@ -34,11 +23,11 @@ function modifiyText(key) {
 				key = key.substring(1, key.length);
         processSpecialKey(key);
       } else {
-        currentState.textBevorCursor += "^";
+        currentState.contentBevorCursor += "^";
       }
     break;
     default:
-      currentState.textBevorCursor += key;
+      currentState.contentBevorCursor += key;
     break;
   }
   writeLine();
@@ -48,103 +37,115 @@ function processSpecialKey(specialKey) {
   switch(specialKey) {
 
     case "AAAA": // Arrow Left
-      if(currentState.textBevorCursor != "") {
-        if(currentState.textBevorCursor.length == 1) {
-          currentState.textBehindCursor = currentState.textBevorCursor + currentState.textBehindCursor;
-          currentState.textBevorCursor = "";
-        } else if(currentState.textBevorCursor.length > 1) {
-          if(currentState.textBevorCursor.substring(currentState.textBevorCursor.length-1, currentState.textBevorCursor.length) != ";") {
-            currentState.textBehindCursor = currentState.textBevorCursor.substring(currentState.textBevorCursor.length-1, currentState.textBevorCursor.length) + currentState.textBehindCursor;
-            currentState.textBevorCursor = currentState.textBevorCursor.substring(0, currentState.textBevorCursor.length-1);
-          } else {
-            let lastIndexOfAnd = currentState.textBevorCursor.lastIndexOf("&", currentState.textBevorCursor.length-1);
-            let searchArea = currentState.textBevorCursor.substring(lastIndexOfAnd, currentState.textBevorCursor.length-1);
-            if(searchArea.search(";") > 0) {
-              currentState.textBehindCursor = currentState.textBevorCursor.substring(currentState.textBevorCursor.length-1, currentState.textBevorCursor.length) + currentState.textBehindCursor;
-              currentState.textBevorCursor = currentState.textBevorCursor.substring(0, currentState.textBevorCursor.length-1);
-            } else {
-              currentState.textBehindCursor = currentState.textBevorCursor.substring(lastIndexOfAnd, currentState.textBevorCursor.length) + currentState.textBehindCursor;
-              currentState.textBevorCursor = currentState.textBevorCursor.substring(0, lastIndexOfAnd);
-            }
-          }
-        }
-      }
+			if(currentState.contentBevorCursor.length > 0) {
+				if(currentState.contentBevorCursor.length == 1) {
+					currentState.contentBehindCursor = currentState.contentBevorCursor + currentState.contentBehindCursor;
+					currentState.contentBevorCursor = "";
+				} else {
+					if(currentState.contentBevorCursor.substring(currentState.contentBevorCursor.length - 1, currentState.contentBevorCursor.length) != ";") {
+						currentState.contentBehindCursor = currentState.contentBevorCursor.substring(currentState.contentBevorCursor.length - 1, currentState.contentBevorCursor.length) + currentState.contentBehindCursor;
+						currentState.contentBevorCursor = currentState.contentBevorCursor.substring(0, currentState.contentBevorCursor.length - 1);
+					} else {
+						let lastIndexOfAnd = currentState.contentBevorCursor.lastIndexOf("&", currentState.contentBevorCursor.length - 1);
+						let searchArea = currentState.contentBevorCursor.substring(lastIndexOfAnd, currentState.contentBevorCursor.length - 1);
+						if(searchArea.search(";") > 0) {
+							currentState.contentBehindCursor = currentState.contentBevorCursor.substring(currentState.contentBevorCursor.length - 1, currentState.contentBevorCursor.length) + currentState.contentBehindCursor;
+							currentState.contentBevorCursor = currentState.contentBevorCursor.substring(0, currentState.contentBevorCursor.length - 1);
+						} else {
+							currentState.contentBehindCursor = currentState.contentBevorCursor.substring(lastIndexOfAnd, currentState.contentBevorCursor.length) + currentState.contentBehindCursor;
+							currentState.contentBevorCursor = currentState.contentBevorCursor.substring(0, lastIndexOfAnd);
+						}
+					}
+				}
+			} else {
+				if(currentState.lineIndex !=  0) {
+					currentState.lineIndex -= 1;
+					getLinesArray()[ currentState.lineIndex ].innerHTML += "<div id=\"cursor\"></div>";
+					currentState.lineNode.innerHTML = currentState.contentBevorCursor + currentState.contentBehindCursor;
+					generateCurrentState();
+				}
+			}
     break;
 
     case "AAAB": // Arrow Up
-      let indexOfLineCurrent = currentState.editorContent.lastIndexOf("<span", currentState.indexOfCursorInEditor) - 7;
-      let indexOfLineAbove = currentState.editorContent.lastIndexOf("<span", (indexOfLineCurrent)) + 6;
-			if(indexOfLineCurrent > 0) {
-      	let contentOfAboveLine = currentState.editorContent.substring(0, indexOfLineCurrent);
-      	contentOfAboveLine = contentOfAboveLine.substring(indexOfLineAbove, contentOfAboveLine.length);
-				currentState.spanElement.innerHTML = currentState.textBevorCursor + currentState.textBehindCursor;
-     		currentState.editorContent = cutTextOut(currentState.editorContent, currentState.indexOfCursorInEditor, currentState.indexOfEndCursorInEditor);
-
-        let indexOfLineEndAbove = indexOfLineCurrent;
-      	let newEditorContent = currentState.editorContent.substring(0, indexOfLineEndAbove);
-      	newEditorContent += "<div id=\"cursor\"></div>";
-      	newEditorContent += currentState.editorContent.substring(indexOfLineEndAbove, currentState.editorContent.length);
-
-      	document.getElementById("editor").innerHTML = newEditorContent;
-      	generateCurrentState();
-		}
+			if(currentState.lineIndex > 0) {
+				currentState.lineIndex -= 1;
+				let contentFromAboveLine = getLinesArray()[ currentState.lineIndex ].innerHTML;
+				if(calculateTextWidth(contentFromAboveLine, currentState.lineNode.style.font, currentState.lineNode.style.fontSize) <= calculateTextWidth(currentState.contentBevorCursor, currentState.lineNode.style.font, currentState.lineNode.style.fontSize)) {
+					getLinesArray()[ currentState.lineIndex ].innerHTML += "<div id=\"cursor\"></div>";
+				} else {
+					let newCursorPos = calculateNewCursorPos(contentFromAboveLine, getLinesArray()[ currentState.lineIndex ].style.font, getLinesArray()[ currentState.lineIndex ].style.fontSize, currentState.contentBevorCursor.length);
+					getLinesArray()[ currentState.lineIndex ].innerHTML = contentFromAboveLine.substring(0, newCursorPos) + "<div id=\"cursor\"></div>" + contentFromAboveLine.substring(newCursorPos, contentFromAboveLine.length);
+				}
+				currentState.lineNode.innerHTML = currentState.contentBevorCursor + currentState.contentBehindCursor;
+			} else {
+				currentState.lineNode.innerHTML = "<div id=\"cursor\"></div>" + currentState.contentBevorCursor + currentState.contentBehindCursor;
+			}
+			generateCurrentState();
     break;
 
     case "AAAC": // Arrow Right
-      if(currentState.textBehindCursor != "") {
-        if(currentState.textBehindCursor.substring(0, 1) != "&") {
-          currentState.textBevorCursor += currentState.textBehindCursor.substring(0, 1);
-          currentState.textBehindCursor = currentState.textBehindCursor.substring(1, currentState.textBehindCursor.length);
-        } else {
-          let indexOfSemi = currentState.textBehindCursor.indexOf(";", 1);
-          currentState.textBevorCursor += currentState.textBehindCursor.substring(0, indexOfSemi+1);
-          currentState.textBehindCursor = currentState.textBehindCursor.substring(indexOfSemi+1, currentState.textBehindCursor.length);
-        }
-      }
+			if(currentState.contentBehindCursor.length > 0) {
+				if(currentState.contentBehindCursor.substring(0, 1) != "&") {
+					currentState.contentBevorCursor += currentState.contentBehindCursor.substring(0, 1);
+					currentState.contentBehindCursor = currentState.contentBehindCursor.substring(1, currentState.contentBehindCursor.length);
+				} else {
+					let indexOfSemicolon = currentState.contentBehindCursor.indexOf(";", 1);
+					currentState.contentBevorCursor += currentState.contentBehindCursor.substring(0, indexOfSemicolon + 1);
+					currentState.contentBehindCursor = currentState.contentBehindCursor.substring(indexOfSemicolon + 1, currentState.contentBehindCursor.length);
+				}
+			} else {
+				if(currentState.lineIndex < (getLinesArray().length - 1)) {
+					currentState.lineIndex += 1;
+					getLinesArray()[ currentState.lineIndex ].innerHTML = "<div id=\"cursor\"></div>" + getLinesArray()[ currentState.lineIndex ].innerHTML;
+					currentState.lineNode.innerHTML = currentState.contentBevorCursor + currentState.contentBehindCursor;
+				} else {
+					if(currentState.lineIndex != (getLinesArray().length - 1)) {
+						currentState.lineNode.innerHTML = "<div id=\"cursor\"></div>" + currentState.contentBevorCursor + currentState.contentBehindCursor;
+					}
+				}
+				generateCurrentState();
+			}
     break;
 
     case "AAAD": // Arrow Down
-    let indexOfLineBelow = currentState.editorContent.indexOf("<span", currentState.indexOfCursorInEditor);
-		if(indexOfLineBelow != -1) {
-			indexOfLineBelow += 6;
-    	let contentOfBelowLine = currentState.editorContent.substring(0, (currentState.editorContent.indexOf("</span", indexOfLineBelow)));
-    	contentOfBelowLine = contentOfBelowLine.substring(indexOfLineBelow, contentOfBelowLine.length);
-    	//currentState.spanElement.innerHTML = currentState.textBevorCursor + currentState.textBehindCursor;
-    	currentState.editorContent = cutTextOut(currentState.editorContent, currentState.indexOfCursorInEditor, currentState.indexOfEndCursorInEditor);
-
-    	let cursorPos = (indexOfLineBelow - (currentState.indexOfEndCursorInEditor - currentState.indexOfCursorInEditor)) + contentOfBelowLine.length;
-    	let newEditorContent = currentState.editorContent.substring(0, cursorPos);
-    	newEditorContent += "<div id=\"cursor\"></div>";
-    	newEditorContent += currentState.editorContent.substring(cursorPos, currentState.editorContent.length);
-
-    	document.getElementById("editor").innerHTML = newEditorContent;
-    	generateCurrentState();
-		}
+			if(currentState.lineIndex < (getLinesArray().length - 1)) {
+				currentState.lineIndex += 1;
+				let contentFromUpperLine = getLinesArray()[ currentState.lineIndex ].innerHTML;
+				if(calculateTextWidth(contentFromUpperLine, currentState.lineNode.style.font, currentState.lineNode.style.fontSize) <= calculateTextWidth(currentState.contentBevorCursor, currentState.lineNode.style.font, currentState.lineNode.style.fontSize)) {
+					getLinesArray()[ currentState.lineIndex ].innerHTML += "<div id=\"cursor\"></div>";
+				} else {
+					let newCursorPos = calculateNewCursorPos(contentFromUpperLine, getLinesArray()[ currentState.lineIndex ].style.font, getLinesArray()[ currentState.lineIndex ].style.fontSize, currentState.contentBevorCursor.length);
+					getLinesArray()[ currentState.lineIndex ].innerHTML = contentFromUpperLine.substring(0, newCursorPos) + "<div id=\"cursor\"></div>" + contentFromUpperLine.substring(newCursorPos, contentFromUpperLine.length);
+				}
+				currentState.lineNode.innerHTML = currentState.contentBevorCursor + currentState.contentBehindCursor;
+			} else {
+				currentState.lineNode.innerHTML = currentState.contentBevorCursor + currentState.contentBehindCursor + "<div id=\"cursor\"></div>";
+			}
+			generateCurrentState();
     break;
 
     case "AAAH":
-      let contentBevorCursor = currentState.textBevorCursor;
-      if(contentBevorCursor.length == "") {
-        let lastIndexOfSpan = currentState.editorContent.lastIndexOf("</span>", currentState.indexOfCursorInEditor);
-        if(lastIndexOfSpan != -1) {
-          let newEditorContent = currentState.editorContent.substring(0, lastIndexOfSpan) + currentState.editorContent.substring(currentState.indexOfCursorInEditor, currentState.editorContent.length);
-          document.getElementById("editor").innerHTML = newEditorContent;
-          generateCurrentState();
-        }
-      } else {
-        if(contentBevorCursor.substring((contentBevorCursor.length-1), contentBevorCursor.length) == ";") {
-          var lastIndexOfAnd = contentBevorCursor.lastIndexOf("&", (contentBevorCursor.length-1));
-          let searchArea = contentBevorCursor.substring(lastIndexOfAnd, (contentBevorCursor.length-1));
-          if(searchArea.search(";") > 0) {
-            contentBevorCursor = contentBevorCursor.substring(0, (contentBevorCursor.length-1));
-          } else {
-            contentBevorCursor = contentBevorCursor.substring(0, lastIndexOfAnd);
-          }
-        } else {
-          contentBevorCursor = contentBevorCursor.substring(0, (contentBevorCursor.length-1));
-        }
-        currentState.textBevorCursor = contentBevorCursor;
-      }
+			var selection = window.getSelection();
+			console.log(selection);
+			if(selection.anchorNode == null) {
+				if(currentState.contentBevorCursor.length == 0) {
+					currentState.lineIndex -= 1;
+					if(currentState.lineIndex != -1) {
+						getLinesArray()[ currentState.lineIndex ].innerHTML += "<div id=\"cursor\"></div>" + currentState.contentBehindCursor;
+						getEditorNode().removeChild(currentState.lineNode);
+						generateCurrentState();
+					} else {
+						currentState.lineIndex += 1;
+					}
+				} else {
+					currentState.contentBevorCursor = currentState.contentBevorCursor.substring(0, (currentState.contentBevorCursor.length - 1));
+				}
+			} else {
+				if(selection.anchorNode.parentNode.id == "editor") {
+					//No Idea how to realise
+				}
+			}
     break;
 
 		case "AAAG":
@@ -152,77 +153,147 @@ function processSpecialKey(specialKey) {
 		break;
 
     case "AABH":
-      currentState.textBehindCursor = currentState.textBehindCursor.substring(1, currentState.textBehindCursor.length);
+			if(currentState.contentBehindCursor.length == 0) {
+				currentState.lineIndex += 1;
+				if(currentState.lineIndex < getLinesArray().length) {
+					currentState.lineNode.innerHTML = currentState.contentBevorCursor + "<div id=\"cursor\"></div>" + getLinesArray()[ currentState.lineIndex ].innerHTML;
+					getEditorNode().removeChild(getLinesArray()[ currentState.lineIndex ]);
+					generateCurrentState();
+				} else {
+					currentState.lineIndex -= 1;
+				}
+			} else {
+					currentState.contentBehindCursor = currentState.contentBehindCursor.substring(1, currentState.contentBehindCursor.length);
+			}
     break;
 
 		case "AAAI":
-			currentState.textBevorCursor += "&#9;"
+			currentState.contentBevorCursor += "&#9;";
 		break;
 
 		case "AAAK":
-			currentState.textBevorCursor += currentState.textBehindCursor;
-			currentState.textBehindCursor = "";
+			currentState.contentBevorCursor += currentState.contentBehindCursor;
+			currentState.contentBehindCursor = "";
 		break;
 
 		case "AAAL":
-			currentState.textBehindCursor = currentState.textBevorCursor + currentState.textBehindCursor;
-			currentState.textBevorCursor = "";
+			currentState.contentBehindCursor = currentState.contentBevorCursor + currentState.contentBehindCursor;
+			currentState.contentBevorCursor = "";
 		break;
 
     case "AAAM":
-      let indexOfCurrentSpan = currentState.editorContent.indexOf("</span>", currentState.indexOfCursorInEditor);
-      let indexOfCurrentSpanEnd = (indexOfCurrentSpan - (currentState.indexOfEndCursor - currentState.indexOfCursor)) - currentState.textBehindCursor.length + 7;
-      currentState.spanElement.innerHTML = currentState.textBevorCursor;
-      currentState.textBevorCursor = "";
-      currentState.editorContent = document.getElementById("editor").innerHTML;
-      let contentBevorSpanEnd = currentState.editorContent.substring(0, indexOfCurrentSpanEnd);
-      let contentBehindSpanEnd = currentState.editorContent.substring(indexOfCurrentSpanEnd, currentState.editorContent.length);
-      document.getElementById("editor").innerHTML = contentBevorSpanEnd + "<span>" + currentState.textBevorCursor + "<div id=\"cursor\"></div>" + currentState.textBehindCursor + "</span>" + contentBehindSpanEnd;
-      currentState.spanElement = document.getElementById("cursor").parentNode;
-      document.getElementById("cursor").style.left = "3px";
+			let new_line_node = document.createElement("span");
+			if(currentState.contentBehindCursor.length == 0) {
+				new_line_node.innerHTML = "<div id=\"cursor\"></div>";
+				currentState.lineNode.innerHTML = currentState.contentBevorCursor + currentState.contentBehindCursor;
+			} else {
+				new_line_node.innerHTML = "<div id=\"cursor\"></div>" + currentState.contentBehindCursor;
+				currentState.lineNode.innerHTML = currentState.contentBevorCursor;
+			}
+			if(currentState.lineIndex == (getLinesArray().length - 1)) {
+				getEditorNode().appendChild(new_line_node);
+			} else {
+				currentState.lineIndex += 1;
+				getEditorNode().insertBefore(new_line_node, getLinesArray()[ currentState.lineIndex ]);
+			}
+			generateCurrentState();
     break;
   }
 }
 
+function getLinesArray() {
+  return Array.from(getEditorNode().children);
+}
+
+function getEditorNode() {
+	return document.getElementById("editor");
+}
+
+function clearEditorArea() {
+	document.getElementById("editor").innerHTML = "<span><div id=\"cursor\"></div></span>";
+}
+
 function generateCurrentState() {
-  currentState.spanElement = document.getElementById("cursor").parentNode;
-  currentState.lineContent = currentState.spanElement.innerHTML;
-  currentState.editorContent = document.getElementById("editor").innerHTML;
-  currentState.indexOfCursor = currentState.lineContent.indexOf("<div id=\"cursor\"");
-  currentState.indexOfCursorInEditor = currentState.editorContent.indexOf("<div id=\"cursor\"");
-  currentState.indexOfEndCursor = (currentState.lineContent.indexOf("</div>", currentState.indexOfCursor) + 6);
-  currentState.indexOfEndCursorInEditor = (currentState.editorContent.indexOf("</div>", currentState.indexOfCursorInEditor) + 6);
-  currentState.textBevorCursor = currentState.lineContent.substring(0, currentState.indexOfCursor);
-  currentState.textBehindCursor = currentState.lineContent.substring(currentState.indexOfEndCursor, currentState.lineContent.length);
+  currentState.lineNode = document.getElementById("cursor").parentNode;
+  currentState.lineIndex = getLinesArray().indexOf(currentState.lineNode);
+  let lineContent = currentState.lineNode.innerHTML;
+  let cursor_index = lineContent.indexOf("<div id=\"cursor\"");
+  let cursor_end_index = lineContent.indexOf("</div>", cursor_index) + 6;
+  let line_length = lineContent.length;
+  currentState.contentBevorCursor = lineContent.substring(0, cursor_index);
+  currentState.contentBehindCursor = lineContent.substring(cursor_end_index, line_length);
 }
 
 function writeLine() {
-  if(currentState.textBevorCursor.length != 0) {
-    currentState.spanElement.innerHTML = currentState.textBevorCursor + "<div id=\"cursor\"></div>" + currentState.textBehindCursor;
-    positionateCursor(currentState.textBevorCursor);
-    document.getElementById("cursor").style.top -= 0;// 13;
-    document.getElementById("editor").scrollLeft = parseInt(document.getElementById("cursor").style.left);
-    document.getElementById("editor").scrollTop = currentState.spanElement.offsetTop - document.getElementById("editor").offsetHeight;
-  } else {
-    if(currentState.textBehindCursor.length != 0) {
-      currentState.spanElement.innerHTML = "<div id=\"cursor\"></div>" + currentState.textBehindCursor;
-      positionateCursor("");
-      document.getElementById("editor").scrollTop = currentState.spanElement.offsetTop - document.getElementById("editor").offsetHeight;
-      document.getElementById("editor").scrollLeft = parseInt(document.getElementById("cursor").style.left);
-    } else {
-      currentState.spanElement.innerHTML = "<div id=\"cursor\"></div>" + currentState.textBehindCursor;
-      positionateCursor("");
-      document.getElementById("cursor").style.top -= 0;//13;
-      document.getElementById("cursor").style.left = calculateTextWidth("", currentState.spanElement.style.font, currentState.spanElement.style.fontSize);
-      document.getElementById("editor").scrollTop = (currentState.spanElement.offsetTop - 13) - document.getElementById("editor").offsetHeight;
-      document.getElementById("editor").scrollLeft = parseInt(document.getElementById("cursor").style.left);
-    }
-  }
+  getLinesArray()[currentState.lineIndex].innerHTML = assembleLine();
+  document.getElementById("cursor").style.top = currentState.lineNode.style.top;
+  document.getElementById("cursor").style.left = calculateTextWidth(currentState.contentBevorCursor, currentState.lineNode.style.font, currentState.lineNode.style.fontSize);// + 11;
 }
 
-function positionateCursor(content) {
-  document.getElementById("cursor").style.top = currentState.spanElement.style.top;
-  document.getElementById("cursor").style.left = calculateTextWidth(content, currentState.spanElement.style.font, currentState.spanElement.style.fontSize);// + 11;
+function assembleLine() {
+	let lineContent = "";
+	if(currentState.contentBevorCursor.length != 0) {
+		lineContent += currentState.contentBevorCursor;
+	}
+	lineContent += "<div id=\"cursor\"></div>";
+	if(currentState.contentBehindCursor.length != 0) {
+		lineContent += currentState.contentBehindCursor;
+	}
+	return lineContent;
+}
+
+function calculateNewCursorPos2(content, font, fontSize, currentCursorPos) {
+	let newCursorPos = content.length / 2;
+	let newCursorLeft = calculateTextWidth(content.substring(0, newCursorPos), font, fontSize);
+	let currentCursorLeft = calculateTextWidth(currentState.contentBevorCursor, currentState.lineNode.style.font, currentState.lineNode.style.fontSize);
+	let searchRadius = newCursorPos + 0;
+	let lastSearchRadius = searchRadius + 0;
+	let searchRunning = true;
+	while(searchRunning) {
+		if(currentCursorLeft <= (newCursorLeft + 1) && currentCursorLeft >= (newCursorLeft - 1)) {
+			searchRunning = false;
+		} else {
+			searchRadius /= 2;
+			if(searchRadius == lastSearchRadius) {
+				searchRunning = false;
+				continue;
+			}
+			lastSearchRadius = searchRadius + 0;
+			if(currentCursorLeft < newCursorLeft) {
+				newCursorPos -= searchRadius;
+			} else {
+				newCursorPos += searchRadius;
+			}
+			newCursorLeft = parseInt(calculateTextWidth(content.substring(0, newCursorPos), font, fontSize));
+		}
+	}
+	return newCursorPos;
+}
+
+function calculateNewCursorPos(content, font, fontSize, currentCursorPos) {
+	let newCursorPos = 1;
+	let newCursorPX = calculateTextWidth(content.substring(0, 1), font, fontSize);
+	let currentCursorPX = calculateTextWidth(currentState.contentBevorCursor, currentState.lineNode.style.font, currentState.lineNode.style.fontSize);
+	let oldPosition = newCursorPX;
+	while(newCursorPX < currentCursorPX) {
+		if(newCursorPos < content.length) {
+			oldPosition = newCursorPX;
+			newCursorPos += 1;
+			newCursorPX = calculateTextWidth(content.substring(0, newCursorPos), font, fontSize);
+		} else {
+			break;
+		}
+	}
+
+	if(newCursorPos != content.length) {
+		let diffBev2CurPos = currentCursorPX - oldPosition;
+		let diffCur2AftPos = newCursorPX - currentCursorPX;
+		if(diffBev2CurPos < diffCur2AftPos) {
+			newCursorPos -= 1;
+		}
+	}
+
+	return newCursorPos;
 }
 
 function calculateTextWidth(text, font, fontSize) {
